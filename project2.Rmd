@@ -1,0 +1,67 @@
+---
+title: "The *ToothGrowth* data analysis."
+author: "Maciej Nowak"
+date: "Tuesday, July 21, 2015"
+output: pdf_document
+---
+
+##Exploratory data analysis
+We will be working on the *ToothGrowth* data that comes with R. The R documentation titles this data as *"The Effect of Vitamin C on Tooth Growth in Guinea Pigs"* and that Vitamin C was served as orange juice (OJ) or ascorbic acid (VC - "pure" Vitamin C).
+First we load the data:
+```{r load, echo=TRUE}
+rm(list = ls()) # clear the environment so the results are reproducible
+data(ToothGrowth) # load the data
+class(ToothGrowth) # check the class/data type
+```
+Now that we know it is a *data.frame* we can continue our analysis:
+```{r, echo=TRUE}
+head(ToothGrowth, 3) # check the columns and how the data looks like
+nrow(ToothGrowth) # how many rows are there?
+levels(ToothGrowth$supp) # how many supplement types are there? 
+unique(ToothGrowth$dose) # is the dose discrete or continuous?
+ToothGrowth[ which.max(ToothGrowth$len), ] # the record with max len
+ToothGrowth[ which.min(ToothGrowth$len), ] # the record with min len
+which(is.na(ToothGrowth$len)) # any NA len
+```
+With this information we can draw a graph to illustrate how consumption of orange juice or vitamin C and the doses impact teeth growth. Let us first explore the data layout:
+```{r, echo=TRUE}
+library(ggplot2)
+g <- ggplot(ToothGrowth, aes(x = dose, y = len))
+g <- g + geom_point() +
+     facet_wrap(~ supp) + 
+     labs(x = "Dose [mg]") +
+     labs(y = "Tooth length [mm]") +
+     labs(title = "Tooth length for OJ (Orange Juice) and Vitamin C") 
+g
+```
+
+Then we would check the data distribution by *supp* and *dose*. The distribution for orange juice is in the top row and for VC in the bottom row:
+```{r, echo=TRUE}
+g <- ggplot(ToothGrowth)
+g <- g + geom_histogram(aes(x = len)) + facet_wrap(supp ~ dose) +
+     labs(x = "Tooth length [mm]") +
+     labs(title = "Tooth length distribution for OJ and Vitamin C")
+g
+```
+
+##Comparison of tooth growth by supp and dose
+So we want to determine whether consumption of orange juice rather than vitamin C would increase teeth growth and whether it depends on the dose. We split *ToothGrowth* by doses and calculate the respective confidence intervals:  
+```{r, echo=TRUE}
+doses <- unique(ToothGrowth$dose)
+```
+**The confidence interval for `r doses[ 1 ]`mg**
+```{r, echo=TRUE}
+d <- ToothGrowth[ ToothGrowth$dose == doses[ 1 ], ]
+t.test(len ~ supp, data = d, paired = FALSE, var.equal = TRUE)
+```
+**The confidence interval for `r doses[ 2 ]`mg**
+```{r, echo=TRUE}
+d <- ToothGrowth[ ToothGrowth$dose == doses[ 2 ], ]
+t.test(len ~ supp, data = d, paired = FALSE, var.equal = TRUE)
+```
+**The confidence interval for `r doses[ 3 ]`mg**
+```{r, echo=TRUE}
+d <- ToothGrowth[ ToothGrowth$dose == doses[ 3 ], ]
+t.test(len ~ supp, data = d, paired = FALSE, var.equal = TRUE)
+```
+From the results printed I would say that for doses `r doses[ 1 ]` and `r doses[ 2 ]` orange juice seems to help growing longer teeth. We cannot say this for the `r doses[ 3 ]` dose since the confidence interval  spreads across zero rather symmetrically and the mean in the OJ group and in the VC group are almost the same.
